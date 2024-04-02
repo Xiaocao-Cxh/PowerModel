@@ -5,7 +5,7 @@ using Ipopt
 using Plots
 using BSON
 
-path_to_code = "D:\\VSCode\\Julia\\"
+path_to_code = "D:\\VSCode\\Julia\\PowerModel"
 
 include("$(path_to_code)\\vanilla_functions.jl")
 
@@ -25,7 +25,8 @@ max_iteration = 2000 # 5000 in real senario
 alpha = 1000 # 1000 in real senario
 areas_id = get_areas_id(data_base)
 
-saved_data = ["shared_variable", "received_variable", "dual_variable", "solution", "mismatch", "counter"]
+# saved_data = ["shared_variable", "received_variable", "dual_variable", "solution", "mismatch", "counter"]
+saved_data = ["solution", "mismatch"]
 # solve using ADMM and save data
 number_runs = 2 # 1000 in real senario
 
@@ -33,20 +34,19 @@ demand_change = 0.5 # 50% change in demand in differet senarios
 result = Dict()
 dataset = Dict()
 c = 1
-data_sample = deepcopy(data_base)
 
 for run_id = 1: number_runs
     ## data variation
     data_sample = deepcopy(data_base)
     change_demand!(data_sample, demand_change)
 
-    result = solve_dopf_admm(data_sample, model_type, optimizer; alpha = alpha, tol=tol, max_iteration=max_iteration, print_level=0, save_data=saved_data)
+    global result = solve_dopf_admm(data_sample, model_type, optimizer; alpha = alpha, tol=tol, max_iteration=max_iteration, print_level=0, save_data=saved_data)
 
     itr = result[1]["counter"]["iteration"]-1
     for itr_id in 1:itr
         for area_id in areas_id
             dataset[c] = extract_data(result, saved_data, run_id, area_id, itr_id, tol_value)
-            c += 1
+            global c += 1
         end
     end
 end
