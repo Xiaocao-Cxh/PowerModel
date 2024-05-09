@@ -20,21 +20,23 @@ optimizer = Ipopt.Optimizer
 # Actual tolerance value so that we don't terminte in designated iterations
 tol = 1e-16 # 1e-16 in real senario
 # Tolerance value we want for labeling the data
-tol_value = 1e-3 # 1e-4 in real senario
-max_iteration = 2000 # 5000 in real senario
+tol_value = 1e-4 # 1e-4 in real senario
+max_iteration = 5000 # 5000 in real senario
 alpha = 1000 # 1000 in real senario
 areas_id = get_areas_id(data_base)
 
 saved_data = ["solution", "mismatch"]
+# shared_variable
+# dual_variabel
 # solve using ADMM and save data
-number_runs = 2 # 1000 in real senario
+number_runs = 1000 # 1000 in real senario
 
 demand_change = 0.5 # 50% change in demand in differet senarios
 result = Dict()
 dataset = Dict()
 c = 1
 # data_sample = deepcopy(data_base)
-
+k = 1
 for run_id = 1: number_runs
     ## data variation
     data_sample = deepcopy(data_base)
@@ -49,10 +51,24 @@ for run_id = 1: number_runs
             global c += 1
         end
     end
-end
 
-file_name = "$(path_to_code)/test.bson"
-bson(file_name, dataset) # To save dataset into designated path
-data = BSON.load(file_name) # To load dataset from designated path
+    println("run_id: ", run_id)
+    if run_id % 100 == 0
+        file_name = "$(path_to_code)/result_divided_$k.bson"
+        bson(file_name, dataset) # To save dataset into designated path
+        global dataset = Dict()
+        gc.GC()
+        global k += 1
+    end
+end
+# Remember to update k and run_id
+println(mod(2, 10))
+# file_name = "$(path_to_code)/result_total.bson"
+# bson(file_name, dataset) # To save dataset into designated path
+# data = BSON.load(file_name) # To load dataset from designated path
 # BSON.jl is the web page
 # Julia.pace.gatech
+
+data = BSON.load("D:\\VSCode\\Julia\\PowerModeltest.bson")
+# One NN for all areas
+# One NN for each area
