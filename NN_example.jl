@@ -1,4 +1,9 @@
-
+# Possible features
+# 0.Solution
+# 1.Shared variable: s
+# 2.Received variable: r
+# 3.Mismatch: delta_x = s - r
+# 4.Dual variable: lambda**k = lambda**(k-1) + alpha * delta_x**k, delta_x**0 = 0, lambda**0 = 0
 
 ## Arrange input/outout data for training and testing
 using Flux
@@ -54,6 +59,7 @@ function get_dataset(data::Dict, train_percent::Float64=0.8; standardize="none",
         X2 = hcat(X2...)
 
         # Perpare output data (labeling)
+        # Shaffling, partitioning data into training, and testing
         train_length_conv = Int(ceil(train_percent*size(X1)[2]))
         train_idcs = sample(1:size(X1)[2], train_length_conv, replace=false)
         test_idcs = setdiff(1:size(X1)[2], train_idcs)
@@ -63,6 +69,7 @@ function get_dataset(data::Dict, train_percent::Float64=0.8; standardize="none",
         ytest_1 = 0 .* ones(1,size(Xtest_1)[2])
 
         train_length_notconv = Int(ceil(train_percent*size(X2)[2]))
+        # Shaffling
         train_idcs = sample(1:size(X2)[2], train_length_notconv, replace=false)
         test_idcs = setdiff(1:size(X2)[2], train_idcs)
         Xtrain_2 = X2[:,train_idcs]
@@ -70,6 +77,7 @@ function get_dataset(data::Dict, train_percent::Float64=0.8; standardize="none",
         ytrain_2 = 1 .* ones(1,size(Xtrain_2)[2])
         ytest_2 = 1 .* ones(1,size(Xtest_2)[2])
 
+        # Make sure label with 0 and 1 are balanced
         Xtrain = hcat(Xtrain_1, Xtrain_2)
         ytrain = hcat(ytrain_1, ytrain_2)
         Xtest = hcat(Xtest_1, Xtest_2)
