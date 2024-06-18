@@ -1,15 +1,10 @@
-# Get Data from result_divided_1-5.bson
-using BSON
-using PowerModels, PowerModelsADA
+# Get Data from result_test_1-5.bson
+using BSON, PowerModels, PowerModelsADA
 using Ipopt # C++ optimization solver
 
 # Skeleton code
 # How to get one sample of data from dataset
 # To get the ouput data
-
-path_to_data = "D:\\VSCode\\Julia\\Special_Problem"
-data_list = [1, 2, 3, 4, 5] # from 1 to 10
-test_case = "pglib_opf_case39_epri.m"
 
 # k = 1 # Number of divided data (later we will loop through all data stored)
 # Order of data in result_divided_$k.bson based on area_id
@@ -28,7 +23,7 @@ Returns:
 function load_data(path_to_data::String, data_list::Vector{Int64})
 
     data = BSON.load("$(path_to_data)\\data\\result_divided_$(data_list[1]).bson")
-    # From data_file to result_divided_10.bson
+    # From data_file to result_test_10.bson
     for k in data_list
         if k != data_list[1]
             data_file = BSON.load("$(path_to_data)\\data\\result_divided_$k.bson")
@@ -82,12 +77,15 @@ Arguments:
     shared_variable_ids::Dict : dictionary contains shared variables ids
     num_area::Int64 : number of areas
     max_itr_id::Int64 : maximum number of iterations in the data
+    alpha::Int64 : alpha value for dual variable calculation
 Returns:
     data_dict::Dict : dictionary constains the features (the dict has keys of feature_name => run_id => itr_id => area_id => variable_name => variable_id => feature_value)
 """
 
-function get_data_dicts(data, shared_variable_ids,num_area=3, max_itr_id=5000)
+function get_data_dicts(data, shared_variable_ids, num_area=3, max_itr_id=5000, alpha=1000)
     # get the ids of the runs in the data
+
+    data_ids = sort(collect(keys(data)))
     run_ids = sort(unique([data[i]["run_id"] for i in data_ids]))
 
     # Initialize dictionaries to store the features (each dict has keys of run_id => itr_id => area_id => variable_name => variable_id => feature_value) e.g. solution_dict[24][1500][1]["qf"]["27"] = -0.7868422377956684
@@ -226,7 +224,6 @@ function get_data_matrix(data_dict, features_vector, run_ids)
         else
             solution_matrix = []
         end
-        # solution_matrix = [data_dict["solution"][run_id][itr_id][area_id][variable_name][variable_id] for run_id in run_ids for itr_id in 1:max_itr_id, for variable_name in keys(data_dict["solution"][run_id][itr_id][area_id]) for variable_id in keys(data_dict["solution"][run_id][itr_id][area_id][variable_name])]
 
         # construct a matrix for shared_variable
         if 1 in features_vector
@@ -264,202 +261,142 @@ function get_data_matrix(data_dict, features_vector, run_ids)
     return Dict("label" => label_vector, "feature" => all_features_matrix)
 end
 
-## Todo:
-# 1. Test 3rd part is working: check vector of vectors construction, check vector of vectors conversion to matrix, check hcat of empty matrix, and the code in general (naming, commenting etc.)
-# 2. Rewrite in 4th part functions get_dataset in NN_example.jl. Part 4 function should shuffle the data, split the data into training and testing and also based on label 0 and 1 balnced, and standardize the data.
 ###########
 # 4th part: perpare data for training and testing
 ###########
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-data_ids = sort(collect(keys(data)))
-max_itr_id = 5000 # maximum number of iterations in the data
-max_run_id = Int64(length(data_ids)/(max_itr_id*num_area))
-
-function get_sample_data(sample, features_vector)
-    # Initialize a zero vector with the right size
-    sample_data = zeros(length(features_vector))
-
-    # Loop through the features
-    for (i, feature) in enumerate(features_vector)
-        # Extract the feature value from the sample
-        # Assuming the sample is a dictionary and the feature is a key
-        sample_data[i] = sample[feature]
-    end
-
-    return sample_data
-end
-
-# data_path: path to bson file that constains data
-# featrues_vector: a vector constrains the features ids. Ex: [0, 2]
 """
-function to arrange the data in a matrix format that is readiable to flux
-    Arguments:
-        data::Dict: dictionary constrains data samples
-        features_vector::Vector{Int64}: list of features to use. Ex: [0, 2]
-            0: solution
-            1: shared_variable
-            2: received_variable
-            3: mismatch
-            4: dual_variable
-    Returns:
-    data_matrix::Matrix{Float64}: matrix of data arranged in a matrix format
+Function to split the data into training and testing, shuffle the data, and standardize the data
+Arguments:
+    data_matrix::Dict : dictionary contains data samples
+    train_percent::Float64 : percentage of data to use for training
+    standardize::String : type of standardization to use
+    stats_dics::Dict : dictionary contains statistics for standardization
+Returns:
+    train_data::Dict : dictionary contains training data
+    test_data::Dict : dictionary contains testing data
 """
-function read_arrange_data(data, features_vector)
-    # 1. Read the data ids and sort them
-    data_ids = sort(collect(keys(data)))
 
-    # 2. Get data parameters
-    num_samples = length(data_ids)
-    num_features = length(features_vector)
+function get_dataset(data_matrix::Dict, train_percent::Float64=0.8)
 
-    areas
-    # 3. Initialize a zero matrix with the right size
-    data_matrix = zeros(num_samples, num_features)
-
-    # 4. Loop through the number of samples
-    for (i, id) in enumerate(data_ids)
-        # 5. Call a helper function `get_sample_data` to get the sample data
-        sample_data = get_sample_data(data[id], features_vector)
-
-        # Store the sample data in the matrix
-        data_matrix[i, :] = sample_data
+    areas_id = keys(data_matrix["feature"]) # Get unique area ids
+    data_area = Dict()
+    for area in areas_id # Get data for each area
+        data_area[area] = Dict("label" => data_matrix["label"][area], "feature" =>  data_matrix["feature"][area])
     end
 
-    return data_matrix
+    # Should be arranged data for each area
+    data_arranged = Dict(area => Dict() for area in areas_id)
+
+    not_converge_ids = Dict(area => [] for area in areas_id)
+    converge_ids = Dict(area => [] for area in areas_id)
+    for area in areas_id
+        # X is a vector with each entery is another vector of the input data of the NN+
+        # Here, we use X1 for inputs with output label 1 (for example, not converged) and X2 for inputs with output label 2 (for example, converged).
+
+        not_converge_ids[area] = findall(data_area[area]["label"] .== 0)
+        converge_ids[area] = findall(data_area[area]["label"] .== 1)
+
+
+
+        # Perpare output data (labeling)
+        # Shaffling, partitioning data into training, and testing
+        train_length_not_converge = Int(ceil(train_percent*length(not_converge_ids[area])))
+        train_ids = sample(not_converge_ids[area], train_length_not_converge, replace=false)
+        test_ids = setdiff(not_converge_ids[area], train_ids)
+        Xtrain_1 = not_converge_ids[area][:,train_ids]
+        Xtest_1 = not_converge_ids[area][:,test_ids]
+        ytrain_1 = 0 .* ones(1,size(Xtrain_1)[2])
+        ytest_1 = 0 .* ones(1,size(Xtest_1)[2])
+
+        train_length_converge = Int(ceil(train_percent*length(converge_ids[area])))
+        # Shaffling
+        train_ids = sample(converge_ids[area], train_length_converge, replace=false)
+        test_ids = setdiff(converge_ids[area], train_ids)
+        Xtrain_2 = converge_ids[area][:,train_ids]
+        Xtest_2 = converge_ids[area][:,test_ids]
+        ytrain_2 = 1 .* ones(1,size(Xtrain_2)[2])
+        ytest_2 = 1 .* ones(1,size(Xtest_2)[2])
+
+        # Make sure label with 0 and 1 are balanced
+        Xtrain = hcat(Xtrain_1, Xtrain_2)
+        ytrain = hcat(ytrain_1, ytrain_2)
+        Xtest = hcat(Xtest_1, Xtest_2)
+        ytest = hcat(ytest_1, ytest_2)
+
+        shuf_1 = shuffle(1:size(Xtrain)[2])
+        shuf_2 = shuffle(1:size(Xtest)[2])
+
+        Xtrain = Xtrain[:, shuf_1]
+        ytrain = ytrain[:, shuf_1]
+        Xtest = Xtest[:, shuf_2]
+        ytest = ytest[:, shuf_2]
+
+        data_arranged[area] = Dict("Xtrain" => Xtrain, "ytrain" => ytrain, "Xtest" => Xtest, "ytest" => ytest)
+    end
+    return data_arranged
 end
 
-
-
-
-
-
-
-
-
-
-
-run_id = 1 # run index (later we will loop through all runs)
-itr_idx = 1 # iteration index (later we will loop through all iterations) (should be equal to the number of iterations in the data multiplied by the number of scenarios)
-
-# each row/sample: some of the 5 features of a one area, one iteration, and one run
-# column/features: one of the 5 faetures
-run_id_pointer = findfirst(i -> data[i]["run_id"] == run_id, data_ids) # pointer to the start of run_id data
-run_id_pointer = 1 + max_itr_id*num_area*(run_id-1)
-
-itr_start = data_ids[run_id_pointer+num_area*(itr_idx-1)] # start of a iteration
-itr_input = Dict()
-itr_label = Dict()
-for a in 0:num_area-1
-    itr_input[data[itr_start+a]["area_id"]] = data[itr_start+a]["input"]
-    itr_label[data[itr_start+a]["area_id"]] = data[itr_start+a]["label"]
-end
-
-# label
-label = Dict(i => itr_label[i] for i in keys(itr_input))
-
-# 0 solution
-solution = Dict(i => itr_input[i]["solution"] for i in keys(itr_input))
-
-
-# construct a vector for solution sample
-sample_solution = Dict(area => [value for variable_name in keys(solution[area]) for (variable_id,value) in solution[area][variable_name]] for area in [1,2,3])
-
-# 1 shared_variable
-shared_variable = Dict()
-for area in keys(itr_input)
-    shared_variable[area] = Dict() # Initialize shared_variable for areas_id
-    for variable in ["qf", "va", "qt", "vm", "pf", "pt"]
-        shared_variable[area][variable] = Dict()
-        for idx in keys(itr_input[area]["solution"][variable])
-            if idx in vcat([shared_variable_ids[area][area2][variable] for area2 in keys(shared_variable_ids[area])]...)
-                shared_variable[area][variable][idx] = itr_input[area]["solution"][variable][idx]
-            end
+function normalize_arranged_data(data_arranged, normalizatoin_method; stats_dict=Dict())
+    for area in keys(data_arranged)
+        if normalizatoin_method == "standardize"
+            stats_dict[area] = Dict()
+            stats_dict[area]["mean"] = mean(data_arranged[area]["Xtrain"], dims=2)
+            stats_dict[area]["std"] = std(data_arranged[area]["Xtrain"], dims=2)
+            data_arranged[area]["Xtrain"] = (data_arranged[area]["Xtrain"] .- stats_dict[area]["mean"]) ./ stats_dict[area]["std"]
+            data_arranged[area]["Xtest"] = (data_arranged[area]["Xtest"] .- stats_dict[area]["mean"]) ./ stats_dict[area]["std"]
+        elseif normalizatoin_method == "minmax"
+            stats_dict[area] = Dict()
+            stats_dict[area]["min"] = minimum(data_arranged[area]["Xtrain"], dims=2)
+            stats_dict[area]["max"] = maximum(data_arranged[area]["Xtrain"], dims=2)
+            data_arranged[area]["Xtrain"] = (data_arranged[area]["Xtrain"] .- stats_dict[area]["min"]) ./ (stats_dict[area]["max"] - stats_dict[area]["min"])
+            data_arranged[area]["Xtest"] = (data_arranged[area]["Xtest"] .- stats_dict[area]["min"]) ./ (stats_dict[area]["max"] - stats_dict[area]["min"])
+        elseif normalizatoin_method == "none"
+            continue
+        else
+            error("Invalid normalization method")
         end
     end
-end
-# 2 received_variable
-# Received variables may have duplicate values from different areas
+    return data_arranged, stats_dict
 
-received_variable = Dict()
-for area in keys(itr_input)
-    received_variable[area] = Dict() # Initialize received_variable for areas_id
-    for variable in ["qf", "va", "qt", "vm", "pf", "pt"]
-        received_variable[area][variable] = Dict()
-        for area2 in keys(shared_variable_ids[area])
-            for idx in shared_variable_ids[area2][area][variable]
-                received_variable[area][variable][idx] = itr_input[area2]["solution"][variable][idx]
-            end
+end
+
+# function to normalize the test data
+function normalize_test_data(data_arranged, normalizatoin_method, stats_dict)
+    for area in keys(data_arranged)
+        if normalizatoin_method == "standardize"
+            data_arranged[area]["Xtest"] = (data_arranged[area]["Xtest"] .- stats_dict[area]["mean"]) ./ stats_dict[area]["std"]
+        elseif normalizatoin_method == "minmax"
+            data_arranged[area]["Xtest"] = (data_arranged[area]["Xtest"] .- stats_dict[area]["min"]) ./ (stats_dict[area]["max"] - stats_dict[area]["min"])
+        elseif normalizatoin_method == "none"
+            continue
+        else
+            error("Invalid normalization method")
         end
     end
+    return data_arranged
+
 end
 
-
-# construct a vector for solution sample
-sample_receive_variable = Dict(area => [value for variable_name in keys(received_variable[area]) for (variable_id,value) in received_variable[area][variable_name]] for area in [1,2,3])
-
-# 3 mismatch
-mismatch = Dict(i => itr_input[i]["mismatch"] for i in keys(itr_input))
-
-# 4 dual_variable
-dual_variable = Dict()
-itr_counter_area = -1
-for area in keys(itr_input)
-    dual_variable[area] = Dict() # Initialize dual_variable for areas_id
-    for variable in ["qf", "va", "qt", "vm", "pf", "pt"]
-        dual_variable[area][variable] = Dict()
-        for area2 in keys(shared_variable_ids[area])
-            for idx in shared_variable_ids[area2][area][variable]
-                dual_variable[area][variable][idx] = 0
-                for itr_counter in 1:itr_idx
-                    itr_counter_start = data_ids[run_id_pointer+num_area*(itr_counter-1)]
-                    for i in collect(1:num_area)
-                        if data[itr_counter_start+(i-1)]["area_id"] == area
-                            itr_counter_area = itr_counter_start+(i-1)
-                        end
-                    end
-                    # May be improved
-                    dual_variable[area][variable][idx] += alpha * data[itr_counter_area]["input"]["mismatch"]["$area2"][variable][idx]
-                end
-            end
-        end
-    end
+function get_area_dataset(data_arranged, area)
+    Xtrain = data_arranged[area]["Xtrain"]
+    ytrain = data_arranged[area]["ytrain"]
+    Xtest = data_arranged[area]["Xtrain"]
+    ytest = data_arranged[area]["ytrain"]
+    return Xtrain, ytrain, Xtest, ytest
 end
 
+### running the code
+path_to_data = "D:\\VSCode\\Julia\\Special_Problem"
+data_list = [1] # from 1 to 10
+test_case = "pglib_opf_case39_epri.m"
+feature_selection = [0, 1, 2, 3, 4]
+train_percent = 0.8
+normalizatoin_method = "standardize"
 
-sample_complete = Dict(area => [sample_solution[area_id]; sample_receive_variable[area_id]] for area in [1,2,3]) # add other featrues
-
-
-##### arrange area sample
-area_id = 1
-number_featrues = length(sample_complete[area_id])
-number_sample = 5 # number of lenth of loop
-all_samples = zeros(number_sample, number_featrues)
-all_samples[5,:] = sample_complete[area_id] # for a single area
-## at the end of the loop
+data = load_data(path_to_data, data_list)
+shared_variable_ids = get_shared_variable_ids(path_to_data, test_case)
+data_dict, run_ids = get_data_dicts(data, shared_variable_ids)
+data_matrix = get_data_matrix(data_dict, feature_selection, run_ids)
+data_arranged = get_dataset(data_matrix, train_percent)
+data_arranged, stats_dict = normalize_arranged_data(data_arranged, normalizatoin_method)
