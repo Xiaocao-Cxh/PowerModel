@@ -102,8 +102,10 @@ function get_data_dicts(data, shared_variable_ids, num_area=3, max_itr_id=5000, 
     dual_variable_dict = Dict()
 
     for run_id in run_ids
+        println("Processing run_id: ", run_id)
         run_id_pointer = run_id_to_index[run_id] # pointer to the start of run_id data
         # run_id_pointer = 1 + max_itr_id*num_area*(run_id-1)
+        println("Starting index for run_id ", run_id, ": ", run_id_to_index[run_id])
 
         label_dict[run_id] = Dict()
         solution_dict[run_id] = Dict()
@@ -185,12 +187,103 @@ function get_data_dicts(data, shared_variable_ids, num_area=3, max_itr_id=5000, 
                 end
             end
         end
+        println("Press Enter to continue to the next run_id...")
+        readline()
     end
     data_dict = Dict("label" => label_dict, "solution" => solution_dict, "shared_variable" => shared_variable_dict, "received_variable" => received_variable_dict, "mismatch" => mismatch_dict, "dual_variable" => dual_variable_dict)
 
     return data_dict, run_ids
 end
 
+for run_id in run_ids[:1]
+    println("Processing run_id: ", run_id)
+    run_id_pointer = run_id_to_index[run_id] # pointer to the start of run_id data
+    # run_id_pointer = 1 + max_itr_id*num_area*(run_id-1)
+    println("Starting index for run_id ", run_id, ": ", run_id_to_index[run_id])
+
+    label_dict[run_id] = Dict()
+    solution_dict[run_id] = Dict()
+    shared_variable_dict[run_id] = Dict()
+    received_variable_dict[run_id] = Dict()
+    mismatch_dict[run_id] = Dict()
+    dual_variable_dict[run_id] = Dict()
+
+    for itr_idx in 1:max_itr_id
+        itr_start = data_ids[run_id_pointer+num_area*(itr_idx-1)] # start of a iteration
+        itr_input = Dict()
+        itr_label = Dict()
+        # This is actually area - 1
+        for area in 0:num_area-1
+            itr_input[data[itr_start+area]["area_id"]] = data[itr_start+area]["input"]
+            itr_label[data[itr_start+area]["area_id"]] = data[itr_start+area]["label"]
+        end
+
+        # label
+        label_dict[run_id][itr_idx] = Dict(area => itr_label[area] for area in keys(itr_input))
+
+        # 0 solution
+        solution_dict[run_id][itr_idx] = Dict(area => itr_input[area]["solution"] for area in keys(itr_input))
+
+        # 1 shared_variable
+        shared_variable_dict[run_id][itr_idx] = Dict()
+        for area in keys(itr_input)
+            shared_variable_dict[run_id][itr_idx][area] = Dict() # Initialize shared_variable for areas_id
+            for variable in ["qf", "va", "qt", "vm", "pf", "pt"]
+                shared_variable_dict[run_id][itr_idx][area][variable] = Dict()
+                for idx in keys(itr_input[area]["solution"][variable])
+                    if idx in vcat([shared_variable_ids[area][area2][variable] for area2 in keys(shared_variable_ids[area])]...)
+                        shared_variable_dict[run_id][itr_idx][area][variable][idx] = itr_input[area]["solution"][variable][idx]
+                    end
+                end
+            end
+        end
+
+        # 2 received_variable
+        # Received variables may have duplicate values from different areas
+        received_variable_dict[run_id][itr_idx] = Dict()
+        for area in keys(itr_input)
+            received_variable_dict[run_id][itr_idx][area] = Dict() # Initialize received_variable for areas_id
+            for variable in ["qf", "va", "qt", "vm", "pf", "pt"]
+                received_variable_dict[run_id][itr_idx][area][variable] = Dict()
+                for area2 in keys(shared_variable_ids[area])
+                    for idx in shared_variable_ids[area2][area][variable]
+                        received_variable_dict[run_id][itr_idx][area][variable][idx] = itr_input[area2]["solution"][variable][idx]
+                    end
+                end
+            end
+        end
+
+        # 3 mismatch
+        mismatch_dict[run_id][itr_idx] = Dict(area => itr_input[area]["mismatch"] for area in keys(itr_input))
+
+        # 4 dual_variable
+        dual_variable_dict[run_id][itr_idx] = Dict()
+        itr_counter_area = -1
+        for area in keys(itr_input)
+            dual_variable_dict[run_id][itr_idx][area] = Dict() # Initialize dual_variable for areas_id
+            for variable in ["qf", "va", "qt", "vm", "pf", "pt"]
+                dual_variable_dict[run_id][itr_idx][area][variable] = Dict()
+                for area2 in keys(shared_variable_ids[area])
+                    for idx in shared_variable_ids[area2][area][variable]
+                        dual_variable_dict[run_id][itr_idx][area][variable][idx] = 0
+                        for itr_counter in 1:itr_idx
+                            itr_counter_start = data_ids[run_id_pointer+num_area*(itr_counter-1)]
+                            for i in collect(1:num_area)
+                                if data[itr_counter_start+(i-1)]["area_id"] == area
+                                    itr_counter_area = itr_counter_start+(i-1)
+                                end
+                            end
+                            # May be improved
+                            dual_variable_dict[run_id][itr_idx][area][variable][idx] += alpha * data[itr_counter_area]["input"]["mismatch"]["$area2"][variable][idx]
+                        end
+                    end
+                end
+            end
+        end
+    end
+    println("Press Enter to continue to the next run_id...")
+    readline()
+end
 
 function get_data_dicts_old(data, shared_variable_ids, num_area=3, max_itr_id=5000, alpha=1000)
     # get the ids of the runs in the data
