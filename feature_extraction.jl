@@ -84,17 +84,13 @@ Returns:
 function get_data_dicts(data, shared_variable_ids, num_area=3, max_itr_id=5000, alpha=1000)
     # get the ids of the runs in the data
 
-    begin
-        time_1 = time()
-        data_ids = sort(collect(keys(data)))
-        run_ids = sort(unique([data[i]["run_id"] for i in data_ids]))
+    data_ids = sort(collect(keys(data)))
+    run_ids = sort(unique([data[i]["run_id"] for i in data_ids]))
 
-        # Precompute the starting index for each run_id
-        run_id_to_index = Dict()
-        for run_id in run_ids
-            run_id_to_index[run_id] = findfirst(i -> data[i]["run_id"] == run_id, data_ids)
-        end
-        println("Time to get run_ids: ", time() - time_1)
+    # Precompute the starting index for each run_id
+    run_id_to_index = Dict()
+    for run_id in run_ids
+        run_id_to_index[run_id] = findfirst(i -> data[i]["run_id"] == run_id, data_ids)
     end
 
     # Initialize dictionaries to store the features (each dict has keys of run_id => itr_id => area_id => variable_name => variable_id => feature_value) e.g. solution_dict[24][1500][1]["qf"]["27"] = -0.7868422377956684
@@ -129,100 +125,75 @@ function get_data_dicts(data, shared_variable_ids, num_area=3, max_itr_id=5000, 
             end
 
             # label
-            begin
-                time_2 = time()
-                label_dict[run_id][itr_idx] = Dict(area => itr_label[area] for area in keys(itr_input))
-                println("Time to get label_dict: ", time() - time_2)
-            end
+            label_dict[run_id][itr_idx] = Dict(area => itr_label[area] for area in keys(itr_input))
 
             # 0 solution
-            begin
-                time_3 = time()
-                solution_dict[run_id][itr_idx] = Dict(area => itr_input[area]["solution"] for area in keys(itr_input))
-                println("Time to get solution_dict: ", time() - time_3)
-            end
+            solution_dict[run_id][itr_idx] = Dict(area => itr_input[area]["solution"] for area in keys(itr_input))
 
             # possible optimization: calls keys(itr_input) multiple times
             # 1 shared_variable
-            begin
-                time_4 = time()
-                shared_variable_dict[run_id][itr_idx] = Dict()
-                for area in keys(itr_input)
-                    shared_variable_dict[run_id][itr_idx][area] = Dict() # Initialize shared_variable for areas_id
-                    for variable in ["qf", "va", "qt", "vm", "pf", "pt"]
-                        shared_variable_dict[run_id][itr_idx][area][variable] = Dict()
-                        for idx in keys(itr_input[area]["solution"][variable])
-                            if idx in vcat([shared_variable_ids[area][area2][variable] for area2 in keys(shared_variable_ids[area])]...)
-                                shared_variable_dict[run_id][itr_idx][area][variable][idx] = itr_input[area]["solution"][variable][idx]
-                            end
+
+            shared_variable_dict[run_id][itr_idx] = Dict()
+            for area in keys(itr_input)
+                shared_variable_dict[run_id][itr_idx][area] = Dict() # Initialize shared_variable for areas_id
+                for variable in ["qf", "va", "qt", "vm", "pf", "pt"]
+                    shared_variable_dict[run_id][itr_idx][area][variable] = Dict()
+                    for idx in keys(itr_input[area]["solution"][variable])
+                        if idx in vcat([shared_variable_ids[area][area2][variable] for area2 in keys(shared_variable_ids[area])]...)
+                            shared_variable_dict[run_id][itr_idx][area][variable][idx] = itr_input[area]["solution"][variable][idx]
                         end
                     end
                 end
-                println("Time to get shared_variable_dict: ", time() - time_4)
             end
 
             # 2 received_variable
             # Received variables may have duplicate values from different areas
-            begin
-                time_5 = time()
-                received_variable_dict[run_id][itr_idx] = Dict()
-                for area in keys(itr_input)
-                    received_variable_dict[run_id][itr_idx][area] = Dict() # Initialize received_variable for areas_id
-                    for variable in ["qf", "va", "qt", "vm", "pf", "pt"]
-                        received_variable_dict[run_id][itr_idx][area][variable] = Dict()
-                        for area2 in keys(shared_variable_ids[area])
-                            for idx in shared_variable_ids[area2][area][variable]
-                                received_variable_dict[run_id][itr_idx][area][variable][idx] = itr_input[area2]["solution"][variable][idx]
-                            end
+            received_variable_dict[run_id][itr_idx] = Dict()
+            for area in keys(itr_input)
+                received_variable_dict[run_id][itr_idx][area] = Dict() # Initialize received_variable for areas_id
+                for variable in ["qf", "va", "qt", "vm", "pf", "pt"]
+                    received_variable_dict[run_id][itr_idx][area][variable] = Dict()
+                    for area2 in keys(shared_variable_ids[area])
+                        for idx in shared_variable_ids[area2][area][variable]
+                            received_variable_dict[run_id][itr_idx][area][variable][idx] = itr_input[area2]["solution"][variable][idx]
                         end
                     end
                 end
-                println("Time to get received_variable_dict: ", time() - time_5)
             end
 
             # 3 mismatch
-            begin
-                time_6 = time()
-                mismatch_dict[run_id][itr_idx] = Dict(area => itr_input[area]["mismatch"] for area in keys(itr_input))
-                println("Time to get mismatch_dict: ", time() - time_6)
-            end
+            mismatch_dict[run_id][itr_idx] = Dict(area => itr_input[area]["mismatch"] for area in keys(itr_input))
 
             # 4 dual_variable
             # y[k] = y[k-1] + alpha * mismatch[k]
             # not y[k] = alpha * (mismatch[1] + mismatch[2] + ... + mismatch[k])
             ## Todo: Suggestion for implementation
 
-            begin
-                time_7 = time()
-                dual_variable_dict[run_id][itr_idx] = Dict()
-                itr_counter_area = -1
-                for area in keys(itr_input)
-                    dual_variable_dict[run_id][itr_idx][area] = Dict() # Initialize dual_variable for areas_id
-                    for variable in ["qf", "va", "qt", "vm", "pf", "pt"]
-                        dual_variable_dict[run_id][itr_idx][area][variable] = Dict()
-                        for area2 in keys(shared_variable_ids[area])
-                            for idx in shared_variable_ids[area2][area][variable]
-                                # dual_variable_dict[run_id][itr_idx][area][variable][idx] = 0
-                                itr_counter_start = data_ids[run_id_pointer+num_area*(itr_idx-1)]
-                                for i in collect(1:num_area)
-                                    if data[itr_counter_start+(i-1)]["area_id"] == area
-                                        itr_counter_area = itr_counter_start+(i-1)
-                                    end
+            dual_variable_dict[run_id][itr_idx] = Dict()
+            itr_counter_area = -1
+            for area in keys(itr_input)
+                dual_variable_dict[run_id][itr_idx][area] = Dict() # Initialize dual_variable for areas_id
+                for variable in ["qf", "va", "qt", "vm", "pf", "pt"]
+                    dual_variable_dict[run_id][itr_idx][area][variable] = Dict()
+                    for area2 in keys(shared_variable_ids[area])
+                        for idx in shared_variable_ids[area2][area][variable]
+                            # dual_variable_dict[run_id][itr_idx][area][variable][idx] = 0
+                            itr_counter_start = data_ids[run_id_pointer+num_area*(itr_idx-1)]
+                            for i in collect(1:num_area)
+                                if data[itr_counter_start+(i-1)]["area_id"] == area
+                                    itr_counter_area = itr_counter_start+(i-1)
                                 end
-                                if itr_idx == 1
-                                    dual_variable_dict[run_id][itr_idx][area][variable][idx] = alpha * data[itr_counter_area]["input"]["mismatch"]["$area2"][variable][idx]
-                                else
-                                    dual_variable_dict[run_id][itr_idx][area][variable][idx] = dual_variable_dict[run_id][itr_idx-1][area][variable][idx] + alpha * data[itr_counter_area]["input"]["mismatch"]["$area2"][variable][idx]
-                                end
+                            end
+                            if itr_idx == 1
+                                dual_variable_dict[run_id][itr_idx][area][variable][idx] = alpha * data[itr_counter_area]["input"]["mismatch"]["$area2"][variable][idx]
+                            else
+                                dual_variable_dict[run_id][itr_idx][area][variable][idx] = dual_variable_dict[run_id][itr_idx-1][area][variable][idx] + alpha * data[itr_counter_area]["input"]["mismatch"]["$area2"][variable][idx]
                             end
                         end
                     end
                 end
-                println("Time to get dual_variable_dict: ", time() - time_7)
             end
         end
-        println("Press Enter to continue to the next run_id...")
-        readline()
     end
     data_dict = Dict("label" => label_dict, "solution" => solution_dict, "shared_variable" => shared_variable_dict, "received_variable" => received_variable_dict, "mismatch" => mismatch_dict, "dual_variable" => dual_variable_dict)
 
