@@ -222,7 +222,6 @@ function get_data_matrix(data_dict, features_vector, run_ids)
     max_itr_id = 5000 # maximum number of iterations in the data
     label_vector = Dict()
     all_features_matrix = Dict()
-    num_rows = length(run_ids)*max_itr_id
 
     for area_id in 1:3
 
@@ -232,32 +231,54 @@ function get_data_matrix(data_dict, features_vector, run_ids)
         # construct a matrix for solution
         if 0 in features_vector
             solution_matrix = [[data_dict["solution"][run_id][itr_id][area_id][variable_name][variable_id] for variable_name in keys(data_dict["solution"][run_id][itr_id][area_id]) for variable_id in keys(data_dict["solution"][run_id][itr_id][area_id][variable_name])] for run_id in run_ids for itr_id in 1:max_itr_id]
-            # This may convert vector of vectors ( Vector{Vector{Float64}} ) into a matrix (Matrix{Float64})
-            solution_matrix = vcat(solution_matrix...)
+            println("size of solution_matrix: ", size(solution_matrix))
+            solution_matrix_vertical = vcat(solution_matrix...)
+            println("size of solution_matrix_vertical: ", size(solution_matrix_vertical))
+            solution_matrix_horizontal = hcat(solution_matrix...)
+            println("size of solution_matrix_horizontal: ", size(solution_matrix_horizontal))
         end
 
         # construct a matrix for shared_variable
         if 1 in features_vector
             shared_variable_matrix = [[data_dict["shared_variable"][run_id][itr_id][area_id][variable_name][variable_id] for variable_name in keys(data_dict["shared_variable"][run_id][itr_id][area_id]) for variable_id in keys(data_dict["shared_variable"][run_id][itr_id][area_id][variable_name])] for run_id in run_ids for itr_id in 1:max_itr_id]
+            println("size of shared_variable_matrix: ", size(shared_variable_matrix))
+            shared_variable_matrix_vertical = vcat(shared_variable_matrix...)
+            println("size of shared_variable_matrix_vertical: ", size(shared_variable_matrix_vertical))
+            shared_variable_matrix_horizontal = hcat(shared_variable_matrix...)
+            println("size of shared_variable_matrix_horizontal: ", size(shared_variable_matrix_horizontal))
         end
 
         # construct a matrix for received_variable
         if 2 in features_vector
             received_variable_matrix = [[data_dict["received_variable"][run_id][itr_id][area_id][variable_name][variable_id] for variable_name in keys(data_dict["received_variable"][run_id][itr_id][area_id]) for variable_id in keys(data_dict["received_variable"][run_id][itr_id][area_id][variable_name])] for run_id in run_ids for itr_id in 1:max_itr_id]
+            println("size of received_variable_matrix: ", size(received_variable_matrix))
+            received_variable_matrix_vertical = vcat(received_variable_matrix...)
+            println("size of received_variable_matrix_vertical: ", size(received_variable_matrix_vertical))
+            received_variable_matrix_horizontal = hcat(received_variable_matrix...)
+            println("size of received_variable_matrix_horizontal: ", size(received_variable_matrix_horizontal))
         end
 
         # construct a matrix for mismatch
         if 3 in features_vector
             mismatch_matrix = [[data_dict["mismatch"][run_id][itr_id][area_id][variable_name] for variable_name in keys(data_dict["mismatch"][run_id][itr_id][area_id])] for run_id in run_ids for itr_id in 1:max_itr_id]
+            println("size of mismatch_matrix: ", size(mismatch_matrix))
+            mismatch_matrix_vertical = vcat(mismatch_matrix...)
+            println("size of mismatch_matrix_vertical: ", size(mismatch_matrix_vertical))
+            mismatch_matrix_horizontal = hcat(mismatch_matrix...)
+            println("size of mismatch_matrix_horizontal: ", size(mismatch_matrix_horizontal))
         end
 
         # construct a matrix for dual_variable
         if 4 in features_vector
             dual_variable_matrix = [[data_dict["dual_variable"][run_id][itr_id][area_id][variable_name][variable_id] for variable_name in keys(data_dict["dual_variable"][run_id][itr_id][area_id]) for variable_id in keys(data_dict["dual_variable"][run_id][itr_id][area_id][variable_name])] for run_id in run_ids for itr_id in 1:max_itr_id]
+            println("size of dual_variable_matrix: ", size(dual_variable_matrix))
+            dual_variable_matrix_vertical = vcat(dual_variable_matrix...)
+            println("size of dual_variable_matrix_vertical: ", size(dual_variable_matrix_vertical))
+            dual_variable_matrix_horizontal = hcat(dual_variable_matrix...)
+            println("size of dual_variable_matrix_horizontal: ", size(dual_variable_matrix_horizontal))
         end
 
         # construct a matrix for all features
-        println("Dimension of solution_matrix: ", size(solution_matrix))
         all_features_matrix[area_id] = hcat(shared_variable_matrix, received_variable_matrix, mismatch_matrix, dual_variable_matrix)
     end
 
