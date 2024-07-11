@@ -251,7 +251,7 @@ function get_data_matrix(data_dict, features_vector, run_ids)
 
         # construct a matrix for mismatch
         if 3 in features_vector
-            mismatch_matrix_ = [[data_dict["mismatch"][run_id][itr_id][area_id][variable_name] for variable_name in keys(data_dict["mismatch"][run_id][itr_id][area_id])] for run_id in run_ids for itr_id in 1:max_itr_id]
+            mismatch_matrix_ = [[data_dict["mismatch"][run_id][itr_id][area_id][variable_name][variable_id] for variable_name in keys(data_dict["mismatch"][run_id][itr_id][area_id]) for variable_id in keys(data_dict["mismatch"][run_id][itr_id][area_id][variable_name])] for run_id in run_ids for itr_id in 1:max_itr_id]
             mismatch_matrix = hcat(mismatch_matrix_...)
             println("mismatch_matrix: ", size(mismatch_matrix))
         end
