@@ -235,41 +235,41 @@ function get_data_matrix(data_dict, features_vector, run_ids)
 
             # This may convert vector of vectors ( Vector{Vector{Float64}} ) into a matrix (Matrix{Float64})
             solution_matrix = vcat(solution_matrix...)
-        else
-            solution_matrix = zeros(Float64, num_rows, 1)
+        # else
+        #     solution_matrix = zeros(Float64, num_rows, 1)
         end
 
         # construct a matrix for shared_variable
-        if 1 in features_vector
-            shared_variable_matrix = [[data_dict["shared_variable"][run_id][itr_id][area_id][variable_name][variable_id] for variable_name in keys(data_dict["shared_variable"][run_id][itr_id][area_id]) for variable_id in keys(data_dict["shared_variable"][run_id][itr_id][area_id][variable_name])] for run_id in run_ids for itr_id in 1:max_itr_id]
-        else
-            shared_variable_matrix = zeros(Float64, num_rows, 1)
-        end
+        # if 1 in features_vector
+        #     shared_variable_matrix = [[data_dict["shared_variable"][run_id][itr_id][area_id][variable_name][variable_id] for variable_name in keys(data_dict["shared_variable"][run_id][itr_id][area_id]) for variable_id in keys(data_dict["shared_variable"][run_id][itr_id][area_id][variable_name])] for run_id in run_ids for itr_id in 1:max_itr_id]
+        # else
+        #     shared_variable_matrix = zeros(Float64, num_rows, 1)
+        # end
 
         # construct a matrix for received_variable
-        if 2 in features_vector
-            received_variable_matrix = [[data_dict["received_variable"][run_id][itr_id][area_id][variable_name][variable_id] for variable_name in keys(data_dict["received_variable"][run_id][itr_id][area_id]) for variable_id in keys(data_dict["received_variable"][run_id][itr_id][area_id][variable_name])] for run_id in run_ids for itr_id in 1:max_itr_id]
-        else
-            received_variable_matrix = zeros(Float64, num_rows, 1)
-        end
+        # if 2 in features_vector
+        #     received_variable_matrix = [[data_dict["received_variable"][run_id][itr_id][area_id][variable_name][variable_id] for variable_name in keys(data_dict["received_variable"][run_id][itr_id][area_id]) for variable_id in keys(data_dict["received_variable"][run_id][itr_id][area_id][variable_name])] for run_id in run_ids for itr_id in 1:max_itr_id]
+        # else
+        #     received_variable_matrix = zeros(Float64, num_rows, 1)
+        # end
 
         # construct a matrix for mismatch
         if 3 in features_vector
             mismatch_matrix = [[data_dict["mismatch"][run_id][itr_id][area_id][variable_name] for variable_name in keys(data_dict["mismatch"][run_id][itr_id][area_id])] for run_id in run_ids for itr_id in 1:max_itr_id]
-        else
-            mismatch_matrix = zeros(Float64, num_rows, 1)
+        # else
+        #     mismatch_matrix = zeros(Float64, num_rows, 1)
         end
 
-        if 4 in features_vector
         # construct a matrix for dual_variable
-            dual_variable_matrix = [[data_dict["dual_variable"][run_id][itr_id][area_id][variable_name][variable_id] for variable_name in keys(data_dict["dual_variable"][run_id][itr_id][area_id]) for variable_id in keys(data_dict["dual_variable"][run_id][itr_id][area_id][variable_name])] for run_id in run_ids for itr_id in 1:max_itr_id]
-        else
-            dual_variable_matrix = zeros(Float64, num_rows, 1)
-        end
+        # if 4 in features_vector
+        #     dual_variable_matrix = [[data_dict["dual_variable"][run_id][itr_id][area_id][variable_name][variable_id] for variable_name in keys(data_dict["dual_variable"][run_id][itr_id][area_id]) for variable_id in keys(data_dict["dual_variable"][run_id][itr_id][area_id][variable_name])] for run_id in run_ids for itr_id in 1:max_itr_id]
+        # else
+        #     dual_variable_matrix = zeros(Float64, num_rows, 1)
+        # end
 
         # construct a matrix for all features
-        all_features_matrix[area_id] = hcat(solution_matrix, shared_variable_matrix, received_variable_matrix, mismatch_matrix, dual_variable_matrix)
-
+        # all_features_matrix[area_id] = hcat(solution_matrix, shared_variable_matrix, received_variable_matrix, mismatch_matrix, dual_variable_matrix)
+        all_features_matrix[area_id] = hcat(solution_matrix, mismatch_matrix)
     end
 
     return Dict("label" => label_vector, "feature" => all_features_matrix)
