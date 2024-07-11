@@ -232,34 +232,40 @@ function get_data_matrix(data_dict, features_vector, run_ids)
         if 0 in features_vector
             solution_matrix_ = [[data_dict["solution"][run_id][itr_id][area_id][variable_name][variable_id] for variable_name in keys(data_dict["solution"][run_id][itr_id][area_id]) for variable_id in keys(data_dict["solution"][run_id][itr_id][area_id][variable_name])] for run_id in run_ids for itr_id in 1:max_itr_id]
             solution_matrix = hcat(solution_matrix_...)
+            println("solution_matrix: ", size(solution_matrix))
         end
 
         # construct a matrix for shared_variable
         if 1 in features_vector
             shared_variable_matrix_ = [[data_dict["shared_variable"][run_id][itr_id][area_id][variable_name][variable_id] for variable_name in keys(data_dict["shared_variable"][run_id][itr_id][area_id]) for variable_id in keys(data_dict["shared_variable"][run_id][itr_id][area_id][variable_name])] for run_id in run_ids for itr_id in 1:max_itr_id]
             shared_variable_matrix = hcat(shared_variable_matrix_...)
+            println("shared_variable_matrix: ", size(shared_variable_matrix))
         end
 
         # construct a matrix for received_variable
         if 2 in features_vector
             received_variable_matrix_ = [[data_dict["received_variable"][run_id][itr_id][area_id][variable_name][variable_id] for variable_name in keys(data_dict["received_variable"][run_id][itr_id][area_id]) for variable_id in keys(data_dict["received_variable"][run_id][itr_id][area_id][variable_name])] for run_id in run_ids for itr_id in 1:max_itr_id]
             received_variable_matrix = hcat(received_variable_matrix_...)
+            println("received_variable_matrix: ", size(received_variable_matrix))
         end
 
         # construct a matrix for mismatch
         if 3 in features_vector
             mismatch_matrix_ = [[data_dict["mismatch"][run_id][itr_id][area_id][variable_name] for variable_name in keys(data_dict["mismatch"][run_id][itr_id][area_id])] for run_id in run_ids for itr_id in 1:max_itr_id]
             mismatch_matrix = hcat(mismatch_matrix_...)
+            println("mismatch_matrix: ", size(mismatch_matrix))
         end
 
         # construct a matrix for dual_variable
         if 4 in features_vector
             dual_variable_matrix_ = [[data_dict["dual_variable"][run_id][itr_id][area_id][variable_name][variable_id] for variable_name in keys(data_dict["dual_variable"][run_id][itr_id][area_id]) for variable_id in keys(data_dict["dual_variable"][run_id][itr_id][area_id][variable_name])] for run_id in run_ids for itr_id in 1:max_itr_id]
             dual_variable_matrix = hcat(dual_variable_matrix_...)
+            println("dual_variable_matrix: ", size(dual_variable_matrix))
         end
 
         # construct a matrix for all features
         all_features_matrix[area_id] = vcat(solution_matrix, shared_variable_matrix, received_variable_matrix, mismatch_matrix, dual_variable_matrix)
+        println("all_features_matrix: ", size(all_features_matrix[area_id]))
     end
 
     return Dict("label" => label_vector, "feature" => all_features_matrix)
