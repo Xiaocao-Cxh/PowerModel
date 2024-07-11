@@ -411,11 +411,7 @@ normalizatoin_method = "standardize"
 @time data = load_data(path_to_data, data_list)
 shared_variable_ids = get_shared_variable_ids(path_to_data, test_case)
 
-begin
-    start_time = time()
-    data_dict, run_ids = get_data_dicts(data, shared_variable_ids)
-    println("Time to get data_dict: ", time() - start_time)
-end
+data_dict, run_ids = get_data_dicts(data, shared_variable_ids)
 
 data_matrix = get_data_matrix(data_dict, feature_selection, run_ids)
 data_arranged = get_dataset(data_matrix, train_percent)
