@@ -258,10 +258,6 @@ function get_data_matrix(data_dict, features_vector, run_ids)
 
         # construct a matrix for all features
         println("Dimension of solution_matrix: ", size(solution_matrix))
-        println("Dimension of shared_variable_matrix: ", size(shared_variable_matrix))
-        println("Dimension of received_variable_matrix: ", size(received_variable_matrix))
-        println("Dimension of mismatch_matrix: ", size(mismatch_matrix))
-        println("Dimension of dual_variable_matrix: ", size(dual_variable_matrix))
         all_features_matrix[area_id] = hcat(shared_variable_matrix, received_variable_matrix, mismatch_matrix, dual_variable_matrix)
     end
 
