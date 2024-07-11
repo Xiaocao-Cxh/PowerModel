@@ -268,7 +268,6 @@ function get_data_matrix(data_dict, features_vector, run_ids)
         # end
 
         # construct a matrix for all features
-        # all_features_matrix[area_id] = hcat(solution_matrix, shared_variable_matrix, received_variable_matrix, mismatch_matrix, dual_variable_matrix)
         all_features_matrix[area_id] = hcat(solution_matrix, mismatch_matrix)
     end
 
