@@ -8,6 +8,7 @@ function change_demand!(data, demand_change)
 end
 
 function get_label(result, itr_id, area_id, tol_value)
+    # Local information
     mismatches = [result[area_id]["previous_solution"]["mismatch"][k][string(area_id)] for k in 1:itr_id]
 
     # Find the last index where the mismatch drops below the tol_value

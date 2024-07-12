@@ -1,11 +1,24 @@
 # Key objective: Generate data for training the neural network
 # Neural netowrk needs data extracted from the generated data
-using PowerModelsADA
-using Ipopt
-using Plots
-using BSON
+using PowerModelsADA, Ipopt, Random, BSON
 
-path_to_code = "D:\\VSCode\\Julia\\PowerModel"
+path_to_code = "D:\\VSCode\\Julia\\Special_Problem"
+
+for k in 2:10
+    # Load the data
+    data = BSON.load("$(path_to_code)\\data\\result_divided_$k.bson")
+
+    # Determine the number of entries to extract
+    num_extract = ceil(Int, length(data) * 0.1)
+
+    # Randomly select 10% of the entries
+    keys_to_extract = randperm(length(data))[1:num_extract]
+    extracted_data = Dict([key => data[key] for key in keys_to_extract])
+
+    # Save the extracted entries in a new file
+    file_name = "$(path_to_code)\\data\\test_$k.bson"
+    BSON.bson(file_name, extracted_data)
+end
 
 include("$(path_to_code)\\vanilla_functions.jl")
 
@@ -55,7 +68,7 @@ for run_id = 1: number_runs
         file_name = "$(path_to_code)/result_divided_$k.bson"
         bson(file_name, dataset) # To save dataset into designated path
         global dataset = Dict()
-        gc.GC()
+        GC.gc()
         global k += 1
     end
 end
