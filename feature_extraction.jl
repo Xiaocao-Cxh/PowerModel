@@ -1,7 +1,6 @@
 # Get Data from result_test_1-5.bson
-using BSON, PowerModels, PowerModelsADA
-using Ipopt # C++ optimization solver
-
+using Random, LinearAlgebra, Statistics, Printf # These are the standard libraries
+using BSON, PowerModels, PowerModelsADA, StatsBase, Flux, Ipopt # C++ optimization solver
 # Skeleton code
 # How to get one sample of data from dataset
 # To get the ouput data
@@ -314,7 +313,7 @@ function get_dataset(data_matrix::Dict, train_percent::Float64=0.8)
         train_length_not_converge = Int(ceil(train_percent*length(not_converge_ids[area])))
         train_ids = sample(not_converge_ids[area], train_length_not_converge, replace=false)
         test_ids = setdiff(not_converge_ids[area], train_ids)
-        Xtrain_1 = not_converge_ids[area][:,train_ids]
+        Xtrain_1 = not_converge_ids[area][train_ids]
         Xtest_1 = not_converge_ids[area][:,test_ids]
         ytrain_1 = 0 .* ones(1,size(Xtrain_1)[2])
         ytest_1 = 0 .* ones(1,size(Xtest_1)[2])
