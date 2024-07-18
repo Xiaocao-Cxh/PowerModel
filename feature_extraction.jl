@@ -290,7 +290,7 @@ function get_dataset(data_matrix::Dict, train_percent::Float64=0.8)
 
     areas_id = keys(data_matrix["feature"]) # Get unique area ids
     data_area = Dict()
-    for area in areas_id # Get data for each area
+    for area in areas_id # Get data for each area, it's the reverse of data_matrix
         data_area[area] = Dict("label" => data_matrix["label"][area], "feature" =>  data_matrix["feature"][area])
     end
 
@@ -303,20 +303,19 @@ function get_dataset(data_matrix::Dict, train_percent::Float64=0.8)
         # X is a vector with each entery is another vector of the input data of the NN+
         # Here, we use X1 for inputs with output label 1 (for example, not converged) and X2 for inputs with output label 2 (for example, converged).
 
-        not_converge_ids[area] = findall(data_area[area]["label"] .== 0)
-        converge_ids[area] = findall(data_area[area]["label"] .== 1)
-
-
+        not_converge_ids[area] = findall(x -> x == 0, data_area[area]["label"])
+        converge_ids[area] = findall(x -> x == 1, data_area[area]["label"])
 
         # Perpare output data (labeling)
         # Shaffling, partitioning data into training, and testing
         train_length_not_converge = Int(ceil(train_percent*length(not_converge_ids[area])))
-        train_ids = sample(not_converge_ids[area], train_length_not_converge, replace=false)
-        test_ids = setdiff(not_converge_ids[area], train_ids)
-        Xtrain_1 = not_converge_ids[area][train_ids]
-        Xtest_1 = not_converge_ids[area][:,test_ids]
-        ytrain_1 = 0 .* ones(1,size(Xtrain_1)[2])
-        ytest_1 = 0 .* ones(1,size(Xtest_1)[2])
+        # train_ids = Int.(sample(not_converge_ids[area], train_length_not_converge, replace=false))
+        train_ids = rand(1:train_length_not_converge, Int(ceil(train_length_not_converge*train_percent)))
+        test_ids = setdiff(1:train_length_not_converge, train_ids)
+        Xtrain_1 = data_area[area]["feature"][:,not_converge_ids[area][train_ids]]
+        Xtest_1 = data_area[area]["feature"][:,not_converge_ids[area][test_ids]]
+        ytrain_1 = data_area[area]["label"][not_converge_ids[area][train_ids]]
+        ytest_1 = data_area[area]["label"][not_converge_ids[area][test_ids]]
 
         train_length_converge = Int(ceil(train_percent*length(converge_ids[area])))
         # Shaffling
@@ -327,12 +326,13 @@ function get_dataset(data_matrix::Dict, train_percent::Float64=0.8)
         ytrain_2 = 1 .* ones(1,size(Xtrain_2)[2])
         ytest_2 = 1 .* ones(1,size(Xtest_2)[2])
 
-        # Make sure label with 0 and 1 are balanced
+        # Make sure label with 0 and 1 are balanced, maybe 50% of each
         Xtrain = hcat(Xtrain_1, Xtrain_2)
         ytrain = hcat(ytrain_1, ytrain_2)
         Xtest = hcat(Xtest_1, Xtest_2)
         ytest = hcat(ytest_1, ytest_2)
 
+        # Shuffling
         shuf_1 = shuffle(1:size(Xtrain)[2])
         shuf_2 = shuffle(1:size(Xtest)[2])
 
