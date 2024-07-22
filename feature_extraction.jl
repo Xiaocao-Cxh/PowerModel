@@ -403,7 +403,7 @@ feature_selection = [0, 1, 2, 3, 4]
 train_percent = 0.8
 normalizatoin_method = "standardize"
 
-@time data = load_data(path_to_data, data_list)
+data = load_data(path_to_data, data_list)
 shared_variable_ids = get_shared_variable_ids(path_to_data, test_case)
 data_dict, run_ids = get_data_dicts(data, shared_variable_ids)
 data_matrix = get_data_matrix(data_dict, feature_selection, run_ids)
