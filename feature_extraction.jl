@@ -319,12 +319,12 @@ function get_dataset(data_matrix::Dict, train_percent::Float64=0.8)
 
         train_length_converge = Int(ceil(train_percent*length(converge_ids[area])))
         # Shaffling
-        train_ids = sample(converge_ids[area], train_length_converge, replace=false)
-        test_ids = setdiff(converge_ids[area], train_ids)
-        Xtrain_2 = converge_ids[area][:,train_ids]
-        Xtest_2 = converge_ids[area][:,test_ids]
-        ytrain_2 = 1 .* ones(1,size(Xtrain_2)[2])
-        ytest_2 = 1 .* ones(1,size(Xtest_2)[2])
+        train_ids = rand(1:train_length_converge, Int(ceil(train_length_converge*train_percent)))
+        test_ids = setdiff(1:train_length_converge, train_ids)
+        Xtrain_2 = data_area[area]["feature"][:,converge_ids[area][train_ids]]
+        Xtest_2 = data_area[area]["feature"][:,converge_ids[area][test_ids]]
+        ytrain_2 = data_area[area]["label"][converge_ids[area][train_ids]]
+        ytest_2 = data_area[area]["label"][converge_ids[area][test_ids]]
 
         # Make sure label with 0 and 1 are balanced, maybe 50% of each
         Xtrain = hcat(Xtrain_1, Xtrain_2)
