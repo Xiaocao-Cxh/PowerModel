@@ -337,9 +337,9 @@ function get_dataset(data_matrix::Dict, train_percent::Float64=0.8)
         shuf_2 = shuffle(1:size(Xtest)[2])
 
         Xtrain = Xtrain[:, shuf_1]
-        ytrain = ytrain[:, shuf_1]
+        ytrain = ytrain[shuf_1]
         Xtest = Xtest[:, shuf_2]
-        ytest = ytest[:, shuf_2]
+        ytest = ytest[shuf_2]
 
         data_arranged[area] = Dict("Xtrain" => Xtrain, "ytrain" => ytrain, "Xtest" => Xtest, "ytest" => ytest)
     end
