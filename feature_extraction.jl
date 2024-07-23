@@ -328,9 +328,9 @@ function get_dataset(data_matrix::Dict, train_percent::Float64=0.8)
 
         # Make sure label with 0 and 1 are balanced, maybe 50% of each
         Xtrain = hcat(Xtrain_1, Xtrain_2)
-        ytrain = hcat(ytrain_1, ytrain_2)
+        ytrain = vcat(ytrain_1, ytrain_2)
         Xtest = hcat(Xtest_1, Xtest_2)
-        ytest = hcat(ytest_1, ytest_2)
+        ytest = vcat(ytest_1, ytest_2)
 
         # Shuffling
         shuf_1 = shuffle(1:size(Xtrain)[2])
