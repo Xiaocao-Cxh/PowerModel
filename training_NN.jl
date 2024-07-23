@@ -3,8 +3,8 @@ using Random, LinearAlgebra, Statistics, Printf # These are the standard librari
 using BSON, PowerModels, PowerModelsADA, StatsBase, Flux, Ipopt # C++ optimization solver
 
 ### running the code
-cd("D:\\VSCode\\Julia\\Special_Problem")
 path_to_data = "D:\\VSCode\\Julia\\Special_Problem"
+cd(path_to_data)
 data_list = [1] # from 1 to 10
 test_case = "pglib_opf_case39_epri.m"
 feature_selection = [0, 1, 2, 3, 4]
