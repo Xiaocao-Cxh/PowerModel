@@ -1,13 +1,3 @@
-# Get Data from result_test_1-5.bson
-using Random, LinearAlgebra, Statistics, Printf # These are the standard libraries
-using BSON, PowerModels, PowerModelsADA, StatsBase, Flux, Ipopt # C++ optimization solver
-# Skeleton code
-# How to get one sample of data from dataset
-# To get the ouput data
-
-# k = 1 # Number of divided data (later we will loop through all data stored)
-# Order of data in result_divided_$k.bson based on area_id
-
 ###########
 # 1st part: load data from multiple files and merge them into one dictionary
 ###########
@@ -394,18 +384,3 @@ function get_area_dataset(data_arranged, area)
     ytest = data_arranged[area]["ytrain"]
     return Xtrain, ytrain, Xtest, ytest
 end
-
-### running the code
-path_to_data = "D:\\VSCode\\Julia\\Special_Problem"
-data_list = [1] # from 1 to 10
-test_case = "pglib_opf_case39_epri.m"
-feature_selection = [0, 1, 2, 3, 4]
-train_percent = 0.8
-normalizatoin_method = "standardize"
-
-data = load_data(path_to_data, data_list)
-shared_variable_ids = get_shared_variable_ids(path_to_data, test_case)
-data_dict, run_ids = get_data_dicts(data, shared_variable_ids)
-data_matrix = get_data_matrix(data_dict, feature_selection, run_ids)
-data_arranged = get_dataset(data_matrix, train_percent)
-data_arranged, stats_dict = normalize_arranged_data(data_arranged, normalizatoin_method)

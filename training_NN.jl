@@ -1,4 +1,6 @@
-using Flux, BSON, StatsBase, Random
+# Get Data from result_test_k.bson
+using Random, LinearAlgebra, Statistics, Printf # These are the standard libraries
+using BSON, PowerModels, PowerModelsADA, StatsBase, Flux, Ipopt # C++ optimization solver
 
 ### running the code
 path_to_data = "D:\\VSCode\\Julia\\Special_Problem"
@@ -8,6 +10,7 @@ feature_selection = [0, 1, 2, 3, 4]
 train_percent = 0.8
 normalizatoin_method = "standardize"
 
+include("$(path_to_data)\\feature_extraction.jl")
 data = load_data(path_to_data, data_list)
 shared_variable_ids = get_shared_variable_ids(path_to_data, test_case)
 data_dict, run_ids = get_data_dicts(data, shared_variable_ids)
