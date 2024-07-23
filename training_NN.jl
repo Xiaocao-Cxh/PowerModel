@@ -41,6 +41,26 @@ loss_tr = Vector{Float32}()
 val_tr = Vector{Float32}()
 params = Flux.params(model)
 
+function loss_function(x,y,params)
+    return Flux.Losses.mse(model(x),y)   #penalize weights, but not bias
+end
+
+function my_custom_train!(params,X, Y, opt, loss_tr, batchsize, model)
+
+    # training_loss is declared local so it will be available for logging outside the gradient calculation.
+    idcs = sample(1:length(axes(X,2)), batchsize, replace=false)
+    Xm = X[:, idcs]
+    Ym = Y[idcs]
+    local training_loss
+    gs = gradient(params) do
+        training_loss = loss_function(Xm, Ym, params)
+        return training_loss
+    end
+    update!(opt, params, gs)
+    push!(loss_tr, training_loss);
+    println("Loss ", training_loss);
+end
+
 for n = 1:number_epochs
     println("Epoch ", n)
     my_custom_train!(params, Xtrain, ytrain, opt, loss_tr, batchsize, model)
