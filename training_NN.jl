@@ -5,9 +5,9 @@ using BSON, PowerModels, PowerModelsADA, StatsBase, Flux, Ipopt # C++ optimizati
 ### running the code
 path_to_data = "D:\\VSCode\\Julia\\Special_Problem"
 cd(path_to_data)
-data_list = [1] # from 1 to 10
+data_list = [1, 2] # from 1 to 10
 test_case = "pglib_opf_case39_epri.m"
-feature_selection = [0, 1, 2, 3, 4]
+feature_selection = [0, 3, 4]
 train_percent = 0.8
 normalizatoin_method = "standardize"
 
@@ -24,39 +24,37 @@ area = 1
 Xtrain, ytrain, Xtest, ytest = get_area_dataset(data_arranged, area)
 
 n_in = size(Xtrain)[1] # number of NN inputs (you might need to include this in the previous function)
-n_hidden = 50
+n_hidden = 50 #!!!
 n_out = 1
 
-
+# 150000 samples, size of Xtrain should be (244, 50000 for area in areas *0.8)
 ## specify NN arch
 # dropout layer may be considered
-model = Chain(Dense(n_in,n_in,relu,init=Flux.kaiming_normal),Dense(n_in,n_hidden,relu,init=Flux.kaiming_normal),Dense(n_hidden,n_hidden,relu,init=Flux.kaiming_normal),Dense(n_hidden,n_hidden,relu,init=Flux.kaiming_normal),Dense(n_hidden,n_hidden,relu,init=Flux.kaiming_normal),Dense(n_hidden,n_hidden,relu,init=Flux.kaiming_normal),Dense(n_hidden,n_out,sigmoid,init=Flux.kaiming_normal));
+model = Chain(Dense(n_in,n_in,relu,init=Flux.kaiming_normal),Dense(n_in,n_in,relu,init=Flux.kaiming_normal),Dense(n_in,n_hidden,relu,init=Flux.kaiming_normal),Dense(n_hidden,n_hidden,relu,init=Flux.kaiming_normal),Dense(n_hidden,n_hidden,relu,init=Flux.kaiming_normal),Dense(n_hidden,n_hidden,relu,init=Flux.kaiming_normal),Dense(n_hidden,n_out,sigmoid,init=Flux.kaiming_normal));
 # https://fluxml.ai/Flux.jl/stable/models/activation/, https://fluxml.ai/Flux.jl/stable/models/layers/
 
 ## specify NN parameters
 opt = ADAM(5e-4)
 number_epochs = 50000
-batchsize = 200
-loss_tr = Vector{Float32}()
-val_tr = Vector{Float32}()
+batchsize = 200 #!!!
+loss_tr = Vector{Float64}()
+val_tr = Vector{Float64}()
 params = Flux.params(model)
+# 1st: weights, 2nd: bias, 3rd: weights of 2nd layer, 4th: bias of 2nd layer, ...
+# Check if FLux have models to store and load the model parameters
 
-function loss_function(x,y,params)
-    return Flux.Losses.mse(model(x),y)   #penalize weights, but not bias
-end
-
-function my_custom_train!(params,X, Y, opt, loss_tr, batchsize, model)
-
+function my_custom_train!(params, X, Y, opt, loss_tr, batchsize, model)
+    local training_loss
     # training_loss is declared local so it will be available for logging outside the gradient calculation.
     idcs = sample(1:length(axes(X,2)), batchsize, replace=false)
     Xm = X[:, idcs]
     Ym = Y[idcs]
-    local training_loss
+    Ym = reshape(Y[idcs], 1, length(idcs))
     gs = gradient(params) do
-        training_loss = loss_function(Xm, Ym, params)
+        training_loss = Flux.Losses.mse(model(Xm),Ym)
         return training_loss
     end
-    update!(opt, params, gs)
+    Flux.Optimise.update!(opt, params, gs)
     push!(loss_tr, training_loss);
     println("Loss ", training_loss);
 end
@@ -67,6 +65,7 @@ for n = 1:number_epochs
 end
 
 y_pred = model(Xtest)
+y_pred = reshape(y_pred, length(y_pred))
 fp = 0 # false positive
 fn = 0 # false negative
 tp = 0 # true positive
@@ -87,4 +86,5 @@ println("Recall: ", tp/(tp+fn))
 println("Accuracy: ", (tp+tn)/(tp+fp+fn+tn))
 test_loss = Flux.Losses.mae(y_pred,ytest)
 println("Test loss ", test_loss)
-plot(loss_tr, yscale=:log10)
+using Plots
+plot(loss_tr)

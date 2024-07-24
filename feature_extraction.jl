@@ -298,23 +298,23 @@ function get_dataset(data_matrix::Dict, train_percent::Float64=0.8)
 
         # Perpare output data (labeling)
         # Shaffling, partitioning data into training, and testing
-        train_length_not_converge = Int(ceil(train_percent*length(not_converge_ids[area])))
+        length_not_converge = Int(ceil(length(not_converge_ids[area])))
         # train_ids = Int.(sample(not_converge_ids[area], train_length_not_converge, replace=false))
-        train_ids = rand(1:train_length_not_converge, Int(ceil(train_length_not_converge*train_percent)))
-        test_ids = setdiff(1:train_length_not_converge, train_ids)
-        Xtrain_1 = data_area[area]["feature"][:,not_converge_ids[area][train_ids]]
-        Xtest_1 = data_area[area]["feature"][:,not_converge_ids[area][test_ids]]
-        ytrain_1 = data_area[area]["label"][not_converge_ids[area][train_ids]]
-        ytest_1 = data_area[area]["label"][not_converge_ids[area][test_ids]]
+        train_ids_1 = rand(1:train_length_not_converge, Int(ceil(length_not_converge*train_percent)))
+        test_ids_1 = setdiff(1:train_length_not_converge, train_ids_1)
+        Xtrain_1 = data_area[area]["feature"][:,not_converge_ids[area][train_ids_1]]
+        Xtest_1 = data_area[area]["feature"][:,not_converge_ids[area][test_ids_1]]
+        ytrain_1 = data_area[area]["label"][not_converge_ids[area][train_ids_1]]
+        ytest_1 = data_area[area]["label"][not_converge_ids[area][test_ids_1]]
 
-        train_length_converge = Int(ceil(train_percent*length(converge_ids[area])))
+        length_converge = Int(ceil(length(converge_ids[area])))
         # Shaffling
-        train_ids = rand(1:train_length_converge, Int(ceil(train_length_converge*train_percent)))
-        test_ids = setdiff(1:train_length_converge, train_ids)
-        Xtrain_2 = data_area[area]["feature"][:,converge_ids[area][train_ids]]
-        Xtest_2 = data_area[area]["feature"][:,converge_ids[area][test_ids]]
-        ytrain_2 = data_area[area]["label"][converge_ids[area][train_ids]]
-        ytest_2 = data_area[area]["label"][converge_ids[area][test_ids]]
+        train_ids_2 = rand(1:train_length_converge, Int(ceil(length_converge*train_percent)))
+        test_ids_2 = setdiff(1:train_length_converge, train_ids_2)
+        Xtrain_2 = data_area[area]["feature"][:,converge_ids[area][train_ids_2]]
+        Xtest_2 = data_area[area]["feature"][:,converge_ids[area][test_ids_2]]
+        ytrain_2 = data_area[area]["label"][converge_ids[area][train_ids_2]]
+        ytest_2 = data_area[area]["label"][converge_ids[area][test_ids_2]]
 
         # Make sure label with 0 and 1 are balanced, maybe 50% of each
         Xtrain = hcat(Xtrain_1, Xtrain_2)
