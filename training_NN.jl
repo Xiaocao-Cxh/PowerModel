@@ -1,6 +1,6 @@
 # Get Data from result_test_k.bson
 using Random, LinearAlgebra, Statistics, Printf # These are the standard libraries
-using BSON, PowerModels, PowerModelsADA, StatsBase, Flux, Ipopt # C++ optimization solver
+using BSON, PowerModels, PowerModelsADA, StatsBase, Flux, Ipopt, Plots # C++ optimization solver
 
 ### running the code
 path_to_data = "D:\\VSCode\\Julia\\Special_Problem"
@@ -86,5 +86,4 @@ println("Recall: ", tp/(tp+fn))
 println("Accuracy: ", (tp+tn)/(tp+fp+fn+tn))
 test_loss = Flux.Losses.mae(y_pred,ytest)
 println("Test loss ", test_loss)
-using Plots
 plot(loss_tr)
