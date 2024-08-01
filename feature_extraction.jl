@@ -253,7 +253,7 @@ function get_data_matrix(data_dict, features_vector, run_ids)
         end
 
         # construct a matrix for all features
-        all_features_matrix[area_id] = vcat(solution_matrix, shared_variable_matrix, received_variable_matrix, mismatch_matrix, dual_variable_matrix)
+        all_features_matrix[area_id] = vcat(solution_matrix, mismatch_matrix, dual_variable_matrix)
         println("all_features_matrix: ", size(all_features_matrix[area_id]))
     end
 
@@ -300,8 +300,8 @@ function get_dataset(data_matrix::Dict, train_percent::Float64=0.8)
         # Shaffling, partitioning data into training, and testing
         length_not_converge = Int(ceil(length(not_converge_ids[area])))
         # train_ids = Int.(sample(not_converge_ids[area], train_length_not_converge, replace=false))
-        train_ids_1 = rand(1:train_length_not_converge, Int(ceil(length_not_converge*train_percent)))
-        test_ids_1 = setdiff(1:train_length_not_converge, train_ids_1)
+        train_ids_1 = rand(1:length_not_converge, Int(ceil(length_not_converge * train_percent)))
+        test_ids_1 = setdiff(1:length_not_converge, train_ids_1)
         Xtrain_1 = data_area[area]["feature"][:,not_converge_ids[area][train_ids_1]]
         Xtest_1 = data_area[area]["feature"][:,not_converge_ids[area][test_ids_1]]
         ytrain_1 = data_area[area]["label"][not_converge_ids[area][train_ids_1]]
@@ -309,8 +309,8 @@ function get_dataset(data_matrix::Dict, train_percent::Float64=0.8)
 
         length_converge = Int(ceil(length(converge_ids[area])))
         # Shaffling
-        train_ids_2 = rand(1:train_length_converge, Int(ceil(length_converge*train_percent)))
-        test_ids_2 = setdiff(1:train_length_converge, train_ids_2)
+        train_ids_2 = rand(1:length_converge, Int(ceil(length_converge * train_percent)))
+        test_ids_2 = setdiff(1:length_converge, train_ids_2)
         Xtrain_2 = data_area[area]["feature"][:,converge_ids[area][train_ids_2]]
         Xtest_2 = data_area[area]["feature"][:,converge_ids[area][test_ids_2]]
         ytrain_2 = data_area[area]["label"][converge_ids[area][train_ids_2]]
