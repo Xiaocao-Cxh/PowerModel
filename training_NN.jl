@@ -5,7 +5,7 @@ using BSON, PowerModels, PowerModelsADA, StatsBase, Flux, Ipopt, Plots # C++ opt
 ### running the code
 path_to_data = "D:\\VSCode\\Julia\\Special_Problem"
 cd(path_to_data)
-data_list = [1, 2] # from 1 to 10
+data_list = [1] # from 1 to 10
 test_case = "pglib_opf_case39_epri.m"
 feature_selection = [0, 3, 4]
 train_percent = 0.8
