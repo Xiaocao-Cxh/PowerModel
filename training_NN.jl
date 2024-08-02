@@ -5,7 +5,7 @@ using BSON, PowerModels, PowerModelsADA, StatsBase, Flux, Ipopt, Plots # C++ opt
 ### running the code
 path_to_data = "D:\\VSCode\\Julia\\Special_Problem"
 cd(path_to_data)
-data_list = [1] # from 1 to 10
+data_list = [1, 2] # from 1 to 10
 test_case = "pglib_opf_case39_epri.m"
 feature_selection = [0, 3, 4]
 train_percent = 0.8
@@ -35,10 +35,11 @@ model = Chain(Dense(n_in,n_in,relu,init=Flux.kaiming_normal),Dense(n_in,n_in,rel
 
 ## specify NN parameters
 opt = ADAM(5e-4)
-number_epochs = 50000
-batchsize = 200 #!!!
+number_epochs = 500 #!!!
+batchsize = 1000 #!!!
 loss_tr = Vector{Float64}()
 val_tr = Vector{Float64}()
+loss_ts = Vector{Float64}()
 params = Flux.params(model)
 # 1st: weights, 2nd: bias, 3rd: weights of 2nd layer, 4th: bias of 2nd layer, ...
 # Check if FLux have models to store and load the model parameters
@@ -62,6 +63,10 @@ end
 for n = 1:number_epochs
     println("Epoch ", n)
     my_custom_train!(params, Xtrain, ytrain, opt, loss_tr, batchsize, model)
+
+    y_pred = model(Xtest)
+    y_pred = reshape(y_pred, length(y_pred))
+    push!(loss_ts, Flux.Losses.mse(y_pred, ytest))
 end
 
 y_pred = model(Xtest)
@@ -86,4 +91,9 @@ println("Recall: ", tp/(tp+fn))
 println("Accuracy: ", (tp+tn)/(tp+fp+fn+tn))
 test_loss = Flux.Losses.mae(y_pred,ytest)
 println("Test loss ", test_loss)
-plot(loss_tr)
+ax = plot(loss_tr)
+plot!(ax, loss_ts)
+xlabel!("Epoch")
+ylabel!("Loss (MSE)")
+title!("Training and Test Loss")
+savefig("$(path_to_data)\\area_$(area)_loss.png")
