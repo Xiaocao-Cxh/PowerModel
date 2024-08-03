@@ -12,7 +12,7 @@ train_percent = 0.8
 normalizatoin_method = "standardize"
 
 include("$(path_to_data)\\feature_extraction.jl")
-data = load_data(path_to_data, data_list)
+begin @time data = load_data(path_to_data, data_list) end
 shared_variable_ids = get_shared_variable_ids(path_to_data, test_case)
 data_dict, run_ids = get_data_dicts(data, shared_variable_ids)
 data_matrix = get_data_matrix(data_dict, feature_selection, run_ids)
@@ -91,9 +91,9 @@ println("Recall: ", tp/(tp+fn))
 println("Accuracy: ", (tp+tn)/(tp+fp+fn+tn))
 test_loss = Flux.Losses.mae(y_pred,ytest)
 println("Test loss ", test_loss)
-ax = plot(loss_tr)
-plot!(ax, loss_ts)
+ax = plot(loss_tr, label="Tr")
+plot!(ax, loss_ts, label="Ts")
 xlabel!("Epoch")
 ylabel!("Loss (MSE)")
 title!("Training and Test Loss")
-savefig("$(path_to_data)\\area_$(area)_loss.png")
+savefig("$(path_to_data)\\plots\\area_$(area)_loss.png")
