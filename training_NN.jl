@@ -21,12 +21,12 @@ data_arranged, stats_dict = normalize_arranged_data(data_arranged, normalizatoin
 area = 1
 Xtrain, ytrain, Xtest, ytest = get_area_dataset(data_arranged, area)
 
-n_in = size(Xtrain)[1] # number of NN inputs (you might need to include this in the previous function)
-n_hidden = 50 #!!!
-n_out = 1
 
 ## NN Architecture
 # dropout layer may be considered
+n_in = size(Xtrain)[1] # number of NN inputs (you might need to include this in the previous function)
+n_hidden = 50 #!!!
+n_out = 1
 model = Chain(Dense(n_in,n_in,relu,init=Flux.kaiming_normal),Dense(n_in,n_in,relu,init=Flux.kaiming_normal),Dense(n_in,n_hidden,relu,init=Flux.kaiming_normal),Dense(n_hidden,n_hidden,relu,init=Flux.kaiming_normal),Dense(n_hidden,n_hidden,relu,init=Flux.kaiming_normal),Dense(n_hidden,n_hidden,relu,init=Flux.kaiming_normal),Dense(n_hidden,n_out,sigmoid,init=Flux.kaiming_normal));
 # https://fluxml.ai/Flux.jl/stable/models/activation/, https://fluxml.ai/Flux.jl/stable/models/layers/
 
