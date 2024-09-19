@@ -22,7 +22,8 @@ data_arranged, stats_dict = normalize_arranged_data(data_arranged, normalizatoin
 area = 1
 Xtrain, ytrain, Xtest, ytest = get_area_dataset(data_arranged, area)
 
-
+y_pred = model(Xtest)
+mse = Flux.Losses.mse(y_pred, ytest)
 # Get data for first run.
 # Get correct termination.
 # Loop throught iterations, and check if the termination is correct for each iteration.
