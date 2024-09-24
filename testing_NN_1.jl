@@ -28,7 +28,11 @@ y_pred = model(Xtest)
 y_pred = reshape(y_pred, length(y_pred))
 mse = Flux.Losses.mse(y_pred, ytest) # 0.54171145f0
 
-# Get data for first run.
-# Get correct termination.
-# Loop throught iterations, and check if the termination is correct for each iteration.
-# Error measures: MSE, Monotonicity, Difference between first convergence flag and correct iteration (Most important, positive are better than negative effect)
+for i in run_ids
+    for j in iterations
+        # Get data for first run.
+        # Get correct termination.
+        # Loop throught iterations, and check if the termination is correct for each iteration.
+        # Error measures: MSE, Monotonicity, Difference between first convergence flag and correct iteration (Most important, positive are better than negative effect)
+    end
+end
