@@ -1,4 +1,5 @@
 # Deploy the model to test the model for Area 1.
+using Flux, BSON, PowerModels, PowerModelsADA, Ipopt
 
 # parameters
 path_to_data = "D:\\VSCode\\Julia\\Special_Problem"
@@ -25,7 +26,8 @@ Xtrain, ytrain, Xtest, ytest = get_area_dataset(data_arranged, area)
 Xtest = convert(Array{Float32}, Xtest)
 y_pred = model(Xtest)
 y_pred = reshape(y_pred, length(y_pred))
-mse = Flux.Losses.mse(y_pred, ytest)
+mse = Flux.Losses.mse(y_pred, ytest) # 0.54171145f0
+
 # Get data for first run.
 # Get correct termination.
 # Loop throught iterations, and check if the termination is correct for each iteration.
