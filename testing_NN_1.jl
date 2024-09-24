@@ -23,6 +23,7 @@ data_arranged, stats_dict = normalize_arranged_data(data_arranged, normalizatoin
 area = 1
 Xtrain, ytrain, Xtest, ytest = get_area_dataset(data_arranged, area)
 
+# Code that may be used to measure the performance of the model.
 Xtest = convert(Array{Float32}, Xtest)
 y_pred = model(Xtest)
 y_pred = reshape(y_pred, length(y_pred))
